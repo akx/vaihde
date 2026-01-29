@@ -1,0 +1,23 @@
+minimum_pre_commit_version: 2.15.0
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 45ef068da5f21267bb2a7ec4a623092959f09ce5  # frozen: v0.14.14
+    hooks:
+      - id: ruff-check
+        args:
+          - --fix
+      - id: ruff-format
+        args:
+          - --quiet
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    hooks:
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        exclude: ^.*\.snap$
+  - repo: https://github.com/crate-ci/typos
+    rev: 06d010dfe4c84fdab1a25ea02b57b3585018ba80  # frozen: typos-dict-v0.13.18
+    hooks:
+      - id: typos

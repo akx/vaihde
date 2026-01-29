@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(tree:*)",
+      "Bash(git -C /Users/akx/build/vaihde log --oneline -10)",
+      "Bash(git --version:*)",
+      "Bash(git worktree:*)",
+      "Bash(python3:*)",
+      "Bash(uv run:*)",
+      "Bash(python:*)"
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+[project]
+name = "vaihde"
+version = "0.1.0"
+license = "MIT"
+description = "A git worktree manager"
+authors = [
+    { name = "Aarni Koskela", email = "akx@iki.fi" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+vaihde = "vaihde.cli:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.14",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+extend-select = [
+    "B",
+    "COM812",
+    "I",
+    "RET",
+]
