@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 
-from vaihde.config import find_config, get_global_config_path, load_config
+from vaihde.config import find_config, get_global_config_path, get_local_config_path, load_config
 from vaihde.excs import VaihdeError
 from vaihde.ops import (
     copy_files,
@@ -105,7 +105,7 @@ worktree_root = "{worktree_root}"
 def cmd_init() -> int:
     """Create a new config file interactively."""
     git_root = get_git_root()
-    local_path = get_global_config_path(git_root)
+    local_path = get_local_config_path(git_root)
     global_path = get_global_config_path(git_root)
 
     existing = find_config()
