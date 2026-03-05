@@ -10,6 +10,8 @@ from vaihde.ops import (
     create_worktree,
     get_git_root,
     list_worktrees,
+    release_worktree,
+    resolve_worktree,
     run_commands,
 )
 
@@ -33,6 +35,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     new_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     subparsers.add_parser("list", help="List worktrees")
+
+    release_parser = subparsers.add_parser("release", help="Release a worktree's branch for use elsewhere")
+    release_parser.add_argument("worktree", help="Worktree path or unique name substring")
+
     subparsers.add_parser("config-path", help="Show the global config path for this directory")
     subparsers.add_parser("init", help="Create a new config file interactively")
 
@@ -73,6 +79,15 @@ def cmd_list() -> int:
     """List worktrees."""
     git_root = get_git_root()
     list_worktrees(git_root)
+    return 0
+
+
+def cmd_release(query: str) -> int:
+    """Release a worktree's branch by switching to a throwaway branch."""
+    git_root = get_git_root()
+    path = resolve_worktree(git_root, query)
+    released = release_worktree(path)
+    log.info("Released branch '%s' in %s", released, path)
     return 0
 
 
@@ -138,6 +153,8 @@ def run(argv: list[str] | None = None) -> int:
             return cmd_new(args.name)
         if args.command == "list":
             return cmd_list()
+        if args.command == "release":
+            return cmd_release(args.worktree)
         if args.command == "config-path":
             return cmd_config_path()
         if args.command == "init":

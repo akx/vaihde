@@ -106,6 +106,98 @@ def run_commands(cwd: Path, commands: list[PostCommand]) -> None:
         subprocess.check_call(args, cwd=cwd, shell=cmd.shell, env=env)
 
 
+def get_current_branch(worktree_path: Path) -> str:
+    """Get the current branch name of a worktree."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=worktree_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise VaihdeError(f"Failed to get current branch: {e.stderr.strip()}") from e
+    branch = result.stdout.strip()
+    if branch == "HEAD":
+        raise VaihdeError("Worktree is in detached HEAD state")
+    return branch
+
+
+def release_worktree(worktree_path: Path) -> str:
+    """Release a worktree by checking out a throwaway branch.
+
+    Creates a new branch named ``{current-branch}-V{nonce}`` and checks it out,
+    freeing the original branch so it can be used elsewhere.
+
+    Returns:
+        The name of the original branch that was released.
+    """
+    import secrets
+
+    current = get_current_branch(worktree_path)
+    nonce = secrets.token_hex(4)
+    release_branch = f"{current}-V{nonce}"
+
+    try:
+        subprocess.run(
+            ["git", "checkout", "-b", release_branch],
+            cwd=worktree_path,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise VaihdeError(f"Failed to create release branch: {e.stderr.strip()}") from e
+
+    return current
+
+
+def get_worktree_paths(repo_root: Path) -> list[Path]:
+    """Return paths of all worktrees (excluding bare repos)."""
+    try:
+        result = subprocess.run(
+            ["git", "worktree", "list", "--porcelain"],
+            cwd=repo_root,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise VaihdeError("Failed to list worktrees") from e
+
+    paths = []
+    for line in result.stdout.splitlines():
+        if line.startswith("worktree "):
+            paths.append(Path(line.removeprefix("worktree ")))
+    return paths
+
+
+def resolve_worktree(repo_root: Path, query: str) -> Path:
+    """Resolve a (partial) worktree name/path to a full worktree path.
+
+    Accepts a full path or any substring that uniquely matches one worktree's
+    directory name.
+    """
+    query_path = Path(query).resolve()
+    worktrees = get_worktree_paths(repo_root)
+
+    # Exact path match
+    for wt in worktrees:
+        if wt == query_path:
+            return wt
+
+    # Substring match on directory name
+    matches = [wt for wt in worktrees if query in wt.name]
+    if len(matches) == 1:
+        return matches[0]
+    if len(matches) > 1:
+        names = ", ".join(str(m) for m in matches)
+        raise VaihdeError(f"Ambiguous worktree '{query}', matches: {names}")
+
+    raise VaihdeError(f"No worktree matching '{query}'")
+
+
 def list_worktrees(repo_root: Path) -> None:
     """List all worktrees for the repository."""
     try:
