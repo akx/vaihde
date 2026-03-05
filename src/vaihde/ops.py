@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import shlex
 import shutil
 import subprocess
@@ -97,20 +98,12 @@ def run_commands(cwd: Path, commands: list[PostCommand]) -> None:
 
     Reports failures but continues execution.
     """
+    env = os.environ.copy()
+    env.pop("UV_PROJECT_ENVIRONMENT", None)
     for cmd in commands:
-        log.debug("Running: %s", cmd.run)
+        log.info("Running: %s", cmd.run)
         args = cmd.run if cmd.shell else shlex.split(cmd.run)
-        result = subprocess.run(
-            args,
-            cwd=cwd,
-            shell=cmd.shell,
-            capture_output=True,
-            text=True,
-        )
-        if result.returncode != 0:
-            log.warning("Command failed with exit code %d", result.returncode)
-            if result.stderr:
-                log.warning("  %s", result.stderr.strip())
+        subprocess.check_call(args, cwd=cwd, shell=cmd.shell, env=env)
 
 
 def list_worktrees(repo_root: Path) -> None:
